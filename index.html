@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Daily Duty Register</title>
+<meta name="description" content="Keep your daily duty record and get monthly and yearly duty statements. Developed by Mahesh Surada, DSS Staff.">
+<meta name="author" content="Mahesh Surada, DSS Staff">
+<meta name="theme-color" content="#0b2545">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Duty Register">
+<style>
+:root{
+  --bg:#eef2f7;--card:#fff;--ink:#0f1b2d;--muted:#5b6b80;--line:#dde4ee;--soft:#f5f8fc;
+  --navy:#0b2545;--navy2:#13315c;--brand:#0f8b8d;--brand-ink:#fff;--brand-soft:#e2f4f3;
+  --duty:#0f8b8d;--leave:#d98a00;--leave-soft:#fff3dc;--hol:#d64545;--hol-soft:#fde8e8;--off:#7a8799;--off-soft:#eceff3;
+  --shadow:0 1px 2px rgba(15,27,45,.06),0 6px 20px -8px rgba(15,27,45,.18);
+  --r:16px;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0a1220;--card:#121d2f;--ink:#e8eef7;--muted:#97a6bb;--line:#22314a;--soft:#0f1a2b;
+  --brand:#2bb3b1;--brand-soft:#123a40;--leave-soft:#3a2c0e;--hol-soft:#3d1a1d;--off-soft:#1d2738;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -12px rgba(0,0,0,.6);color-scheme:dark;
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;padding-bottom:calc(84px + var(--sab))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:var(--brand)}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+.top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:calc(14px + var(--sat)) 0 18px;position:relative;overflow:hidden}
+.top::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(43,179,177,.35),transparent 70%)}
+.top .wrap{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.logo{width:40px;height:40px;border-radius:11px;flex:none;background:url(icons/icon-192.png) center/cover}
+.top h1{font-size:18px;margin:0;line-height:1.2}
+.top .sub{font-size:13px;opacity:.78;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .grow{flex:1;min-width:0}
+
+main{padding-top:16px}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 10px}
+.card h3{font-size:14px;margin:14px 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.center{text-align:center}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:11px 16px;font-weight:600;background:var(--brand);color:var(--brand-ink);min-height:44px}
+.btn.ghost{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--hol-soft);color:var(--hol)}
+.btn.block{width:100%}
+.btn.sm{padding:7px 12px;min-height:36px;font-size:14px;border-radius:10px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btns .btn{flex:1 1 auto}
+.icon-btn{border:0;background:var(--soft);border:1px solid var(--line);width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.stat b{display:block;font-size:20px;line-height:1.1}
+.stat span{font-size:11.5px;color:var(--muted)}
+@media (max-width:420px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* entries */
+.entry{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line);width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0}
+.entry:first-child{border-top:0}
+.tag{flex:none;width:6px;align-self:stretch;border-radius:4px;background:var(--duty)}
+.t-leave .tag{background:var(--leave)}.t-holiday .tag{background:var(--hol)}.t-off .tag{background:var(--off)}
+.entry .main{flex:1;min-width:0}
+.entry .title{font-weight:600}
+.entry .meta{font-size:13px;color:var(--muted);margin-top:2px}
+.entry .hrs{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--brand-soft);color:var(--brand)}
+.pill.leave{background:var(--leave-soft);color:var(--leave)}.pill.holiday{background:var(--hol-soft);color:var(--hol)}.pill.off{background:var(--off-soft);color:var(--off)}
+.day-h{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0 4px;border-top:1px solid var(--line);font-weight:700}
+.day-h:first-child{border-top:0;padding-top:0}
+.day-h .muted{font-weight:500;font-size:13px}
+.empty-day{display:flex;justify-content:space-between;align-items:center;padding:8px 0;color:var(--muted);font-size:14px;border-top:1px dashed var(--line)}
+.empty-day button{border:1px dashed var(--line);background:none;border-radius:10px;padding:5px 10px;color:var(--brand);font-weight:600}
+
+/* month nav + segmented */
+.mnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.mnav strong{font-size:17px}
+.seg{display:flex;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:none;padding:9px 4px;font-size:14px;line-height:1.2;border-radius:9px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .dow{font-size:11px;text-align:center;color:var(--muted);padding-bottom:2px}
+.cal button{aspect-ratio:1/1;border:1px solid var(--line);border-radius:9px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;font-size:13px;font-weight:600;line-height:1.1}
+.cal button small{font-size:9.5px;font-weight:600;opacity:.9}
+.cal button.duty{background:var(--duty);color:#fff;border-color:transparent}
+.cal button.leave{background:var(--leave);color:#fff;border-color:transparent}
+.cal button.holiday{background:var(--hol);color:#fff;border-color:transparent}
+.cal button.off{background:var(--off-soft);color:var(--off)}
+.cal button.miss{border-style:dashed;color:var(--muted)}
+.cal button.today{outline:2px solid var(--navy2);outline-offset:1px}
+.cal button.future{opacity:.45}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+/* bars */
+.bar{margin:8px 0}
+.bar .lbl{display:flex;justify-content:space-between;font-size:13.5px;gap:8px}
+.bar .lbl span:last-child{color:var(--muted);white-space:nowrap}
+.bar .track{height:8px;background:var(--soft);border-radius:6px;overflow:hidden;margin-top:4px;border:1px solid var(--line)}
+.bar .fill{height:100%;background:var(--brand);border-radius:6px}
+
+/* tables */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+table.st{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+table.st th,table.st td{border:1px solid var(--line);padding:6px 7px;text-align:left;vertical-align:top}
+table.st th{background:var(--soft);font-weight:700;font-size:12px;white-space:nowrap}
+table.st td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.st tr.na td{color:var(--muted);font-style:italic}
+table.st tr.lv td{background:var(--leave-soft)}
+table.st tr.hd td{background:var(--hol-soft)}
+table.st tr.of td{background:var(--off-soft)}
+table.st tfoot td{font-weight:700;background:var(--soft)}
+
+/* forms */
+label.f{display:block;margin-bottom:12px}
+label.f>span{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.in{width:100%;border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:11px 12px;min-height:46px;outline:none;-webkit-appearance:none;appearance:none}
+select.in{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.in:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+textarea.in{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:7px 12px;font-size:13.5px;font-weight:600}
+.chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.chip small{font-weight:500;opacity:.8}
+.calc{background:var(--brand-soft);color:var(--brand);border-radius:12px;padding:10px 12px;font-weight:700;margin:-2px 0 12px;font-size:14px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:12px}
+.check input{width:20px;height:20px;accent-color:var(--brand)}
+
+/* list editor in settings */
+.li{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li .grow{flex:1;min-width:0}
+.li .x{border:0;background:none;color:var(--hol);font-size:20px;width:36px;height:36px;border-radius:10px}
+.li .star{border:0;background:none;font-size:18px;width:36px;height:36px;color:var(--muted)}
+.li .star.on{color:#e0a400}
+
+/* bottom nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:var(--sab)}
+nav.tabs .wrap{display:flex;justify-content:space-around;padding:0 8px}
+nav.tabs button{flex:1;border:0;background:none;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--muted)}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--brand)}
+nav.tabs .fab{flex:none;width:56px;height:56px;margin:-18px 6px 0;border-radius:18px;background:var(--brand);color:#fff;box-shadow:0 10px 24px -8px var(--brand);justify-content:center;padding:0}
+nav.tabs .fab svg{width:28px;height:28px}
+
+/* sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(5,12,24,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+.sheet{background:var(--card);width:100%;max-width:620px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:8px 16px calc(18px + var(--sab));animation:up .2s ease-out}
+.sheet .grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 10px}
+.sheet .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sheet .sh h2{margin:0;font-size:18px}
+@media (min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:22px}}
+@keyframes up{from{transform:translateY(30px);opacity:.6}}
+@keyframes fade{from{opacity:0}}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translate(-50%,20px);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:80;opacity:0;visibility:hidden;transition:.2s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+
+.credit{text-align:center;font-size:12.5px;color:var(--muted);padding:10px 0 20px}
+.credit b{color:var(--ink)}
+
+/* onboarding */
+.ob{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:calc(24px + var(--sat)) 0 calc(24px + var(--sab));background:linear-gradient(160deg,var(--navy),var(--navy2) 60%,#0f6b72);color:#fff}
+.ob .wrap{max-width:480px;width:100%}
+.ob .big{width:88px;height:88px;border-radius:24px;background:url(icons/icon-512.png) center/cover;box-shadow:0 18px 40px -12px rgba(0,0,0,.5);margin:0 auto 18px}
+.ob h1{font-size:28px;margin:0 0 8px;text-align:center}
+.ob p.lead{opacity:.85;text-align:center;margin:0 0 22px}
+.ob .feat{list-style:none;padding:0;margin:0 0 24px}
+.ob .feat li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;opacity:.95}
+.ob .feat li b{display:block}
+.ob .by{text-align:center;font-size:13px;opacity:.85;margin-top:16px}
+.ob .by b{opacity:1}
+.ob .card{color:var(--ink)}
+.ob .btn{min-height:50px;font-size:16px}
+.step{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;text-align:center;margin-bottom:8px}
+
+/* print */
+#print{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff!important;color:#000!important;padding:0}
+  body>*:not(#print){display:none!important}
+  #print{display:block;font:11pt/1.35 "Times New Roman",Georgia,serif;color:#000}
+  #print h1{font-size:15pt;text-align:center;margin:0 0 2pt;text-transform:uppercase;letter-spacing:.03em}
+  #print h2{font-size:12pt;text-align:center;margin:0 0 8pt;font-weight:600}
+  #print .meta{display:grid;grid-template-columns:1fr 1fr;gap:2pt 16pt;margin:6pt 0 8pt;font-size:10.5pt}
+  #print table{border-collapse:collapse;width:100%!important;min-width:0!important;font-size:9.5pt;page-break-inside:auto}
+  #print td:nth-child(2){white-space:nowrap}
+  #print tr{page-break-inside:avoid}
+  #print th,#print td{border:1px solid #000;padding:3pt 4pt;text-align:left;vertical-align:top;background:#fff!important;color:#000!important}
+  #print th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print td.n{text-align:right}
+  #print h3{font-size:11pt;margin:10pt 0 4pt}
+  #print .sum{display:grid;grid-template-columns:repeat(4,1fr);gap:4pt;margin:8pt 0}
+  #print .sum div{border:1px solid #000;padding:4pt;text-align:center;font-size:9.5pt}
+  #print .sum b{display:block;font-size:12pt}
+  #print .sign{display:flex;justify-content:space-between;margin-top:42pt;font-size:10.5pt}
+  #print .sign div{text-align:center;border-top:1px solid #000;padding-top:3pt;min-width:170pt}
+  #print .foot{margin-top:18pt;text-align:center;font-size:8.5pt;color:#444}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="tabs" id="tabs" hidden>
+  <div class="wrap">
+    <button data-tab="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Today</button>
+    <button data-tab="register"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l3 3v15H5V3z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Register</button>
+    <button class="fab" data-act="add" aria-label="Add duty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button data-tab="reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Statements</button>
+    <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+  </div>
+</nav>
+<div id="sheet"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="print"></div>
+
+<script>
+'use strict';
+/*
+ * Daily Duty Register
+ * Developed by Mahesh Surada, DSS Staff.
+ * All data stays on this device (localStorage). No login, no server.
+ */
+const CREDIT = 'Developed by Mahesh Surada, DSS Staff';
+const KEY = 'ddr.v1';
+const DEFAULT_NATURES = ['General duty','Office duty','Boarding duty','Ship duty','Field duty','Night duty','Gate / security duty','Escort duty','Counter duty','Training','Meeting','Standby / on call'];
+const DEFAULT_SHIFTS = [
+  {name:'General',from:'09:00',to:'17:00'},
+  {name:'Morning',from:'06:00',to:'14:00'},
+  {name:'Evening',from:'14:00',to:'22:00'},
+  {name:'Night',from:'22:00',to:'06:00'}
+];
+const LEAVE_TYPES = ['Casual Leave (CL)','Earned Leave (EL)','Medical Leave','Half Pay Leave (HPL)','Restricted Holiday (RH)','Compensatory Off','Special Casual Leave','Other leave'];
+const TYPES = {duty:'Duty',leave:'Leave',holiday:'Holiday',off:'Weekly off'};
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/* ---------- dates & time ---------- */
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const parts = iso => iso.split('-').map(Number);
+const dObj = iso => { const [y,m,d] = parts(iso); return new Date(y, m-1, d); };
+const addDays = (iso, n) => { const [y,m,d] = parts(iso); const t = new Date(Date.UTC(y, m-1, d+n)); return t.toISOString().slice(0,10); };
+const monthStart = (y, m) => `${y}-${pad(m)}-01`;
+const monthEnd = (y, m) => { const d = new Date(Date.UTC(y, m, 0)); return d.toISOString().slice(0,10); };
+const monthName = (y, m) => new Date(y, m-1, 1).toLocaleDateString('en-IN', {month:'long', year:'numeric'});
+const shortMonth = m => new Date(2000, m-1, 1).toLocaleDateString('en-IN', {month:'short'});
+const dayName = iso => dObj(iso).toLocaleDateString('en-IN', {weekday:'short'});
+const fmtDate = iso => dObj(iso).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+const fmtDateLong = iso => dObj(iso).toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+const ddmmyyyy = iso => { const [y,m,d] = parts(iso); return `${pad(d)}-${pad(m)}-${y}`; };
+const toMin = t => { const [h,m] = String(t).split(':').map(Number); return h*60 + (m||0); };
+const fmt12 = t => { if (!t) return ''; let [h,m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${pad(m)} ${ap}`; };
+const fmtHM = mins => `${Math.floor(mins/60)}:${pad(Math.round(mins%60))}`;
+const fmtHrs = mins => { const h = Math.floor(mins/60), m = Math.round(mins%60); return m ? `${h}h ${m}m` : `${h}h`; };
+function durMin(e) {
+  if (e.type !== 'duty' || !e.from || !e.to) return 0;
+  let d = toMin(e.to) - toMin(e.from);
+  if (d <= 0) d += 1440; // overnight (or a full 24-hour duty when from = to)
+  return d;
+}
+const isNight = e => e.type === 'duty' && e.from && e.to && (toMin(e.to) <= toMin(e.from) || toMin(e.from) >= 20*60 || toMin(e.from) < 4*60);
+
+/* ---------- storage ---------- */
+function fresh() {
+  return {v:1, profile:{name:'',designation:'',empId:'',office:''}, departments:[], shifts:DEFAULT_SHIFTS.map(s => ({...s})), natures:DEFAULT_NATURES.slice(), stdHours:8, defaults:{dept:'',from:'09:00',to:'17:00',nature:'General duty'}, entries:[], created:todayISO()};
+}
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.entries)) return Object.assign(fresh(), s);
+  } catch (e) {}
+  return null;
+}
+let S = load();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { toast('Could not save. Your browser storage may be full or blocked.'); }
+}
+
+/* ---------- ui state ---------- */
+const now = new Date();
+const UI = { tab:'home', regY:now.getFullYear(), regM:now.getMonth()+1, rep:'month', repY:now.getFullYear(), repM:now.getMonth()+1, yr:now.getFullYear(), from:monthStart(now.getFullYear(), now.getMonth()+1), to:todayISO(), showEmpty:true };
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ---------- queries & stats ---------- */
+const sortE = (a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.from || '') < (b.from || '') ? -1 : 1;
+const inRange = (from, to) => S.entries.filter(e => e.date >= from && e.date <= to).sort(sortE);
+const onDate = iso => S.entries.filter(e => e.date === iso).sort(sortE);
+function stats(list) {
+  const byDay = {};
+  list.forEach(e => (byDay[e.date] = byDay[e.date] || []).push(e));
+  const r = {dutyDays:0, mins:0, ot:0, night:0, duties:0, leave:0, holiday:0, off:0, natures:{}, leaves:{}, depts:{}, days:Object.keys(byDay).length};
+  const std = (Number(S.stdHours) || 8) * 60;
+  for (const day in byDay) {
+    const es = byDay[day], du = es.filter(e => e.type === 'duty');
+    if (du.length) {
+      r.dutyDays++;
+      const dm = du.reduce((s, e) => s + durMin(e), 0);
+      r.mins += dm; r.ot += Math.max(0, dm - std);
+    }
+    if (es.some(e => e.type === 'leave')) r.leave++;
+    if (es.some(e => e.type === 'holiday')) r.holiday++;
+    if (es.some(e => e.type === 'off')) r.off++;
+    es.forEach(e => {
+      if (e.type === 'duty') {
+        r.duties++; if (isNight(e)) r.night++;
+        const n = e.nature || 'Duty'; (r.natures[n] = r.natures[n] || {count:0, mins:0}); r.natures[n].count++; r.natures[n].mins += durMin(e);
+        const d = e.dept || '—'; (r.depts[d] = r.depts[d] || {count:0, mins:0}); r.depts[d].count++; r.depts[d].mins += durMin(e);
+      } else if (e.type === 'leave') {
+        const l = e.leaveType || 'Leave'; r.leaves[l] = (r.leaves[l] || 0) + 1;
+      }
+    });
+  }
+  return r;
+}
+function entryLabel(e) {
+  if (e.type === 'duty') return e.nature || 'Duty';
+  if (e.type === 'leave') return e.leaveType || 'Leave';
+  if (e.type === 'holiday') return e.nature || 'Holiday';
+  return 'Weekly off';
+}
+function dayClass(es) {
+  if (!es.length) return '';
+  if (es.some(e => e.type === 'duty')) return 'duty';
+  if (es.some(e => e.type === 'leave')) return 'leave';
+  if (es.some(e => e.type === 'holiday')) return 'holiday';
+  return 'off';
+}
+
+/* ---------- rendering ---------- */
+const app = $('#app');
+function header(sub) {
+  const p = S.profile;
+  return `<header class="top"><div class="wrap"><div class="logo" aria-hidden="true"></div><div class="grow"><h1>Daily Duty Register</h1><div class="sub">${esc(sub || [p.name, S.defaults.dept].filter(Boolean).join(' · '))}</div></div></div></header>`;
+}
+const credit = () => `<div class="credit">Daily Duty Register · <b>${esc(CREDIT)}</b></div>`;
+
+function render() {
+  if (!S || !S.departments.length) { $('#tabs').hidden = true; return renderOnboarding(1); }
+  $('#tabs').hidden = false;
+  $$('#tabs [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
+  ({home:renderHome, register:renderRegister, reports:renderReports, settings:renderSettings})[UI.tab]();
+}
+
+function statsGrid(st) {
+  return `<div class="stats">
+    <div class="stat"><b>${st.dutyDays}</b><span>Duty days</span></div>
+    <div class="stat"><b>${fmtHM(st.mins)}</b><span>Duty hours</span></div>
+    <div class="stat"><b>${fmtHM(st.ot)}</b><span>Extra hours</span></div>
+    <div class="stat"><b>${st.leave}</b><span>Leave days</span></div>
+  </div>`;
+}
+function entryRow(e, showDate) {
+  const hrs = e.type === 'duty' ? fmtHrs(durMin(e)) : '';
+  const time = e.type === 'duty' ? `${fmt12(e.from)} – ${fmt12(e.to)}` : TYPES[e.type];
+  const meta = [showDate ? fmtDate(e.date) : '', time, e.dept, e.place].filter(Boolean).map(esc).join(' · ');
+  return `<button class="entry t-${e.type}" data-edit="${e.id}"><span class="tag"></span><span class="main"><span class="title">${esc(entryLabel(e))}</span>${e.type !== 'duty' ? ` <span class="pill ${e.type}">${TYPES[e.type]}</span>` : (isNight(e) ? ' <span class="pill">Night</span>' : '')}<div class="meta">${meta}</div>${e.remarks ? `<div class="meta">${esc(e.remarks)}</div>` : ''}</span><span class="hrs">${hrs}</span></button>`;
+}
+
+function renderHome() {
+  const t = todayISO(), td = onDate(t);
+  const [y, m] = parts(t);
+  const st = stats(inRange(monthStart(y, m), monthEnd(y, m)));
+  const h = new Date().getHours();
+  const hi = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const last = S.entries.filter(e => e.type === 'duty').sort(sortE).pop();
+  const recent = S.entries.slice().sort(sortE).reverse().filter(e => e.date !== t).slice(0, 6);
+  // days this month without any entry (up to yesterday)
+  let missing = 0; for (let d = monthStart(y, m); d < t; d = addDays(d, 1)) if (!onDate(d).length) missing++;
+  app.innerHTML = header(`${hi}${S.profile.name ? ', ' + S.profile.name.split(' ')[0] : ''}`) + `<main class="wrap">
+    <section class="card">
+      <div class="row between"><h2 style="margin:0">Today</h2><span class="muted small">${esc(fmtDateLong(t))}</span></div>
+      ${td.length ? `<div style="margin-top:6px">${td.map(e => entryRow(e)).join('')}</div>` : `<p class="muted" style="margin:8px 0 12px">No duty entered for today yet.</p>`}
+      <div class="btns" style="margin-top:8px">
+        <button class="btn" data-act="add">＋ ${td.length ? 'Add another' : "Add today's duty"}</button>
+        ${last ? `<button class="btn ghost" data-act="repeat" title="${esc(entryLabel(last))}">↻ Same as last duty</button>` : ''}
+      </div>
+      ${last ? `<div class="muted small" style="margin-top:8px">Last duty: ${esc(entryLabel(last))}, ${fmt12(last.from)} – ${fmt12(last.to)}, ${esc(last.dept || '')}</div>` : ''}
+    </section>
+    <section class="card">
+      <div class="row between" style="margin-bottom:10px"><h2 style="margin:0">${esc(monthName(y, m))}</h2><button class="btn sm ghost" data-goto="reports">Statement →</button></div>
+      ${statsGrid(st)}
+      ${missing ? `<p class="small" style="margin:12px 0 0">⚠️ <b>${missing} day${missing > 1 ? 's' : ''}</b> this month ${missing > 1 ? 'have' : 'has'} no entry. <a href="#" data-goto="register">Fill the register</a></p>` : ''}
+    </section>
+    <section class="card">
+      <h2>Recent entries</h2>
+      ${recent.length ? recent.map(e => entryRow(e, true)).join('') : '<p class="muted" style="margin:0">Your earlier duties will show here.</p>'}
+    </section>
+    ${credit()}
+  </main>`;
+}
+
+function renderRegister() {
+  const y = UI.regY, m = UI.regM, t = todayISO();
+  const start = monthStart(y, m), end = monthEnd(y, m);
+  const list = inRange(start, end);
+  let html = '';
+  const last = end < t ? end : t;
+  for (let d = (last >= start ? last : null); d && d >= start; d = addDays(d, -1)) {
+    const es = list.filter(e => e.date === d);
+    if (es.length) {
+      const mins = es.reduce((s, e) => s + durMin(e), 0);
+      html += `<div class="day-h"><span>${esc(dayName(d))}, ${esc(fmtDate(d))}</span><span class="muted">${mins ? fmtHrs(mins) : ''}</span></div>` + es.map(e => entryRow(e)).join('') + `<div style="padding:2px 0 6px"><button class="btn sm ghost" data-add-date="${d}">＋ Add on this day</button></div>`;
+    } else if (UI.showEmpty) {
+      html += `<div class="empty-day"><span>${esc(dayName(d))}, ${esc(fmtDate(d))} — not entered</span><button data-add-date="${d}">＋ Add</button></div>`;
+    }
+  }
+  // future-dated entries in this month (e.g. planned leave)
+  const fut = list.filter(e => e.date > last);
+  if (fut.length) html = `<div class="day-h"><span>Upcoming</span><span></span></div>` + fut.map(e => entryRow(e, true)).join('') + html;
+  if (!html) html = `<p class="muted center" style="margin:16px 0">No entries in ${esc(monthName(y, m))}.</p>`;
+  const st = stats(list);
+  app.innerHTML = header('Register') + `<main class="wrap">
+    <div class="mnav"><button class="icon-btn" data-reg="-1" aria-label="Previous month">‹</button><strong>${esc(monthName(y, m))}</strong><button class="icon-btn" data-reg="1" aria-label="Next month">›</button></div>
+    <section class="card">${statsGrid(st)}
+      <div class="row between" style="margin-top:12px;flex-wrap:wrap">
+        <label class="check" style="margin:0"><input type="checkbox" id="showEmpty" ${UI.showEmpty ? 'checked' : ''}> Show days not entered</label>
+        <button class="btn sm ghost" data-act="fill-off">Mark Sundays as weekly off</button>
+      </div>
+    </section>
+    <section class="card">${html}</section>
+    ${credit()}
+  </main>`;
+}
+
+/* ---------- statements ---------- */
+function profileMeta() {
+  const p = S.profile;
+  return [['Name', p.name], ['Designation', p.designation], ['Employee ID', p.empId], ['Office / Station', p.office]].filter(x => x[1]);
+}
+function statementTable(from, to) {
+  const t = todayISO(), list = inRange(from, to);
+  const lastDay = to < t ? to : (from <= t ? t : to);
+  let rows = '', sn = 0;
+  for (let d = from; d <= to; d = addDays(d, 1)) {
+    const es = list.filter(e => e.date === d);
+    if (!es.length) {
+      if (d <= lastDay) rows += `<tr class="na"><td class="n">${++sn}</td><td>${ddmmyyyy(d)}</td><td>${dayName(d)}</td><td colspan="6">Not entered</td></tr>`;
+      continue;
+    }
+    es.forEach((e, i) => {
+      const first = i === 0;
+      const cls = e.type === 'leave' ? 'lv' : e.type === 'holiday' ? 'hd' : e.type === 'off' ? 'of' : '';
+      const lead = first ? `<td class="n" rowspan="${es.length}">${++sn}</td><td rowspan="${es.length}">${ddmmyyyy(d)}</td><td rowspan="${es.length}">${dayName(d)}</td>` : '';
+      if (e.type === 'duty') {
+        rows += `<tr>${lead}<td>${esc(e.dept)}</td><td>${fmt12(e.from)}</td><td>${fmt12(e.to)}</td><td class="n">${fmtHM(durMin(e))}</td><td>${esc(e.nature)}${e.place ? ', ' + esc(e.place) : ''}</td><td>${esc(e.remarks)}</td></tr>`;
+      } else {
+        rows += `<tr class="${cls}">${lead}<td>${esc(e.dept)}</td><td colspan="3">${TYPES[e.type]}</td><td>${esc(entryLabel(e))}</td><td>${esc(e.remarks)}</td></tr>`;
+      }
+    });
+  }
+  const st = stats(list);
+  return {st, html:`<table class="st"><thead><tr><th>S.No</th><th>Date</th><th>Day</th><th>Department</th><th>Duty from</th><th>Duty to</th><th>Hours</th><th>Nature of duty</th><th>Remarks</th></tr></thead><tbody>${rows || '<tr><td colspan="9" class="center">No entries</td></tr>'}</tbody><tfoot><tr><td colspan="6">Total duty hours (${st.dutyDays} duty days)</td><td class="n">${fmtHM(st.mins)}</td><td colspan="2">Extra hours over ${S.stdHours} h/day: ${fmtHM(st.ot)}</td></tr></tfoot></table>`};
+}
+function breakdownTables(st) {
+  const nat = Object.entries(st.natures).sort((a, b) => b[1].mins - a[1].mins);
+  const dep = Object.entries(st.depts).sort((a, b) => b[1].mins - a[1].mins);
+  const lv = Object.entries(st.leaves).sort((a, b) => b[1] - a[1]);
+  let h = '';
+  if (nat.length) h += `<h3>Nature of duty summary</h3><div class="tw"><table class="st" style="min-width:0"><thead><tr><th>Nature of duty</th><th>Times</th><th>Hours</th></tr></thead><tbody>${nat.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="n">${v.count}</td><td class="n">${fmtHM(v.mins)}</td></tr>`).join('')}</tbody></table></div>`;
+  if (dep.length > 1) h += `<h3>Department summary</h3><div class="tw"><table class="st" style="min-width:0"><thead><tr><th>Department</th><th>Duties</th><th>Hours</th></tr></thead><tbody>${dep.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="n">${v.count}</td><td class="n">${fmtHM(v.mins)}</td></tr>`).join('')}</tbody></table></div>`;
+  if (lv.length) h += `<h3>Leave summary</h3><div class="tw"><table class="st" style="min-width:0"><thead><tr><th>Leave type</th><th>Days</th></tr></thead><tbody>${lv.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="n">${v}</td></tr>`).join('')}</tbody></table></div>`;
+  return h;
+}
+function bars(st) {
+  const nat = Object.entries(st.natures).sort((a, b) => b[1].mins - a[1].mins);
+  if (!nat.length) return '';
+  const max = nat[0][1].mins || 1;
+  return `<h3>Nature of duty</h3>` + nat.map(([k, v]) => `<div class="bar"><div class="lbl"><span>${esc(k)}</span><span>${v.count}× · ${fmtHrs(v.mins)}</span></div><div class="track"><div class="fill" style="width:${Math.max(3, v.mins / max * 100)}%"></div></div></div>`).join('');
+}
+function calendar(y, m) {
+  const start = monthStart(y, m), end = monthEnd(y, m), t = todayISO();
+  const first = (dObj(start).getDay() + 6) % 7; // Monday first
+  let h = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="dow">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) h += '<div></div>';
+  for (let d = start; d <= end; d = addDays(d, 1)) {
+    const es = onDate(d), c = dayClass(es), mins = es.reduce((s, e) => s + durMin(e), 0);
+    const extra = c === 'duty' ? `<small>${fmtHM(mins)}</small>` : c === 'leave' ? '<small>Leave</small>' : c === 'holiday' ? '<small>Hol</small>' : c === 'off' ? '<small>Off</small>' : '';
+    h += `<button class="${c || (d < t ? 'miss' : d > t ? 'future' : '')} ${d === t ? 'today' : ''}" data-day="${d}" aria-label="${fmtDate(d)}">${parts(d)[2]}${extra}</button>`;
+  }
+  return `<div class="cal">${h}</div><div class="legend"><span><i style="background:var(--duty)"></i>Duty</span><span><i style="background:var(--leave)"></i>Leave</span><span><i style="background:var(--hol)"></i>Holiday</span><span><i style="background:var(--off-soft);border:1px solid var(--line)"></i>Weekly off</span><span><i style="border:1px dashed var(--muted)"></i>Not entered</span></div>`;
+}
+function yearRows(y) {
+  const rows = [];
+  for (let m = 1; m <= 12; m++) rows.push({m, st:stats(inRange(monthStart(y, m), monthEnd(y, m)))});
+  return rows;
+}
+function yearTable(y) {
+  const rows = yearRows(y), tot = stats(inRange(`${y}-01-01`, `${y}-12-31`));
+  return {tot, html:`<table class="st" style="min-width:520px"><thead><tr><th>Month</th><th>Duty days</th><th>Duty hours</th><th>Extra hours</th><th>Night duties</th><th>Leave</th><th>Holidays</th><th>Weekly off</th></tr></thead><tbody>${rows.map(({m, st}) => `<tr${st.days ? '' : ' class="na"'}><td>${new Date(y, m-1, 1).toLocaleDateString('en-IN', {month:'long'})}</td><td class="n">${st.dutyDays}</td><td class="n">${fmtHM(st.mins)}</td><td class="n">${fmtHM(st.ot)}</td><td class="n">${st.night}</td><td class="n">${st.leave}</td><td class="n">${st.holiday}</td><td class="n">${st.off}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total ${y}</td><td class="n">${tot.dutyDays}</td><td class="n">${fmtHM(tot.mins)}</td><td class="n">${fmtHM(tot.ot)}</td><td class="n">${tot.night}</td><td class="n">${tot.leave}</td><td class="n">${tot.holiday}</td><td class="n">${tot.off}</td></tr></tfoot></table>`};
+}
+function yearChart(y) {
+  const rows = yearRows(y), max = Math.max(1, ...rows.map(r => r.st.mins));
+  return `<div style="display:flex;align-items:flex-end;gap:5px;height:130px;margin:6px 0 4px">${rows.map(({m, st}) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px"><span style="font-size:10px;color:var(--muted)">${st.mins ? Math.round(st.mins/60) : ''}</span><div title="${fmtHrs(st.mins)}" style="width:100%;max-width:30px;border-radius:6px 6px 2px 2px;background:${st.mins ? 'var(--brand)' : 'var(--line)'};height:${st.mins ? Math.max(4, st.mins / max * 100) : 2}%"></div></div>`).join('')}</div><div style="display:flex;gap:5px">${rows.map(r => `<span style="flex:1;text-align:center;font-size:10.5px;color:var(--muted)">${shortMonth(r.m).slice(0,3)}</span>`).join('')}</div><div class="muted small center" style="margin-top:4px">Duty hours per month</div>`;
+}
+
+function renderReports() {
+  const seg = `<div class="seg" role="tablist"><button data-rep="month" class="${UI.rep === 'month' ? 'on' : ''}">Monthly</button><button data-rep="year" class="${UI.rep === 'year' ? 'on' : ''}">Yearly</button><button data-rep="range" class="${UI.rep === 'range' ? 'on' : ''}">Custom dates</button></div>`;
+  let body = '';
+  if (UI.rep === 'month') {
+    const y = UI.repY, m = UI.repM, {st, html} = statementTable(monthStart(y, m), monthEnd(y, m));
+    body = `<div class="mnav"><button class="icon-btn" data-rm="-1" aria-label="Previous month">‹</button><strong>${esc(monthName(y, m))}</strong><button class="icon-btn" data-rm="1" aria-label="Next month">›</button></div>
+      <section class="card">${statsGrid(st)}
+        <div class="stats" style="margin-top:8px"><div class="stat"><b>${st.duties}</b><span>Duties</span></div><div class="stat"><b>${st.night}</b><span>Night duties</span></div><div class="stat"><b>${st.holiday}</b><span>Holidays</span></div><div class="stat"><b>${st.off}</b><span>Weekly off</span></div></div>
+      </section>
+      <section class="card"><h2>Calendar</h2>${calendar(y, m)}</section>
+      ${st.duties ? `<section class="card">${bars(st)}</section>` : ''}
+      <section class="card"><div class="row between" style="margin-bottom:10px"><h2 style="margin:0">Monthly duty statement</h2></div>
+        <div class="tw">${html}</div>${breakdownTables(st)}
+        <div class="btns" style="margin-top:14px"><button class="btn" data-act="print">🖨️ Print / Save PDF</button><button class="btn ghost" data-act="csv">⬇️ Excel (CSV)</button><button class="btn ghost" data-act="share">↗ Share summary</button></div>
+      </section>`;
+  } else if (UI.rep === 'year') {
+    const y = UI.yr, {tot, html} = yearTable(y);
+    body = `<div class="mnav"><button class="icon-btn" data-ry="-1" aria-label="Previous year">‹</button><strong>Year ${y}</strong><button class="icon-btn" data-ry="1" aria-label="Next year">›</button></div>
+      <section class="card">${statsGrid(tot)}<div style="margin-top:14px">${yearChart(y)}</div></section>
+      <section class="card"><h2>Yearly duty statement</h2><div class="tw">${html}</div>${breakdownTables(tot)}
+        <div class="btns" style="margin-top:14px"><button class="btn" data-act="print">🖨️ Print / Save PDF</button><button class="btn ghost" data-act="csv">⬇️ Excel (CSV)</button><button class="btn ghost" data-act="share">↗ Share summary</button></div>
+      </section>`;
+  } else {
+    const ok = UI.from && UI.to && UI.from <= UI.to;
+    const res = ok ? statementTable(UI.from, UI.to) : null;
+    body = `<section class="card"><div class="two"><label class="f"><span>From</span><input class="in" type="date" id="rFrom" value="${UI.from}"></label><label class="f"><span>To</span><input class="in" type="date" id="rTo" value="${UI.to}"></label></div>
+      <div class="chips" style="margin:0"><button class="chip" data-quick="week">This week</button><button class="chip" data-quick="lastmonth">Last month</button><button class="chip" data-quick="q">Last 3 months</button><button class="chip" data-quick="fy">Financial year</button></div></section>
+      ${ok ? `<section class="card">${statsGrid(res.st)}</section><section class="card"><h2>Duty statement</h2><div class="muted small" style="margin:-4px 0 10px">${esc(fmtDate(UI.from))} to ${esc(fmtDate(UI.to))}</div><div class="tw">${res.html}</div>${breakdownTables(res.st)}
+        <div class="btns" style="margin-top:14px"><button class="btn" data-act="print">🖨️ Print / Save PDF</button><button class="btn ghost" data-act="csv">⬇️ Excel (CSV)</button><button class="btn ghost" data-act="share">↗ Share summary</button></div></section>` : '<p class="muted center">Choose a start date before the end date.</p>'}`;
+  }
+  app.innerHTML = header('Duty statements') + `<main class="wrap">${seg}${body}${credit()}</main>`;
+}
+
+/* print, csv, share for the current statement */
+function currentReport() {
+  if (UI.rep === 'month') return {kind:'month', from:monthStart(UI.repY, UI.repM), to:monthEnd(UI.repY, UI.repM), title:'Monthly Duty Statement', period:monthName(UI.repY, UI.repM), file:`duty-statement-${UI.repY}-${pad(UI.repM)}`};
+  if (UI.rep === 'year') return {kind:'year', from:`${UI.yr}-01-01`, to:`${UI.yr}-12-31`, title:'Yearly Duty Statement', period:`January to December ${UI.yr}`, file:`duty-statement-${UI.yr}`};
+  return {kind:'range', from:UI.from, to:UI.to, title:'Duty Statement', period:`${fmtDate(UI.from)} to ${fmtDate(UI.to)}`, file:`duty-statement-${UI.from}-to-${UI.to}`};
+}
+function printReport() {
+  const r = currentReport();
+  let table, st;
+  if (r.kind === 'year') { const y = yearTable(UI.yr); table = y.html; st = y.tot; }
+  else { const s = statementTable(r.from, r.to); table = s.html; st = s.st; }
+  const meta = [...profileMeta(), ['Period', r.period]];
+  $('#print').innerHTML = `<h1>${esc(r.title)}</h1><h2>${esc(S.defaults.dept)}</h2>
+    <div class="meta">${meta.map(([k, v]) => `<div><b>${esc(k)}:</b> ${esc(v)}</div>`).join('')}</div>
+    <div class="sum"><div><b>${st.dutyDays}</b>Duty days</div><div><b>${fmtHM(st.mins)}</b>Duty hours</div><div><b>${fmtHM(st.ot)}</b>Extra hours</div><div><b>${st.leave}</b>Leave days</div></div>
+    ${table}${breakdownTables(st).replace(/<div class="tw">|<\/div>/g, '')}
+    <p style="font-size:10pt;margin-top:12pt">Certified that the above duties were performed by me as stated.</p>
+    <div class="sign"><div>Signature of employee</div><div>Signature of officer in charge</div></div>
+    <div class="foot">Generated on ${esc(fmtDate(todayISO()))} with Daily Duty Register · ${esc(CREDIT)}</div>`;
+  setTimeout(() => window.print(), 50);
+}
+function csvCell(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function download(name, text, type) {
+  const blob = new Blob([text], {type});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function csvReport() {
+  const r = currentReport();
+  const head = [['Daily Duty Register'], [r.title, r.period], ['Department', S.defaults.dept], ...profileMeta(), []];
+  let rows;
+  if (r.kind === 'year') {
+    rows = [['Month','Duty days','Duty hours','Extra hours','Night duties','Leave days','Holidays','Weekly off'],
+      ...yearRows(UI.yr).map(({m, st}) => [new Date(UI.yr, m-1, 1).toLocaleDateString('en-IN', {month:'long'}), st.dutyDays, fmtHM(st.mins), fmtHM(st.ot), st.night, st.leave, st.holiday, st.off])];
+    const t = stats(inRange(r.from, r.to)); rows.push(['Total', t.dutyDays, fmtHM(t.mins), fmtHM(t.ot), t.night, t.leave, t.holiday, t.off]);
+  } else {
+    rows = [['Date','Day','Type','Department','Duty from','Duty to','Hours','Nature of duty','Place','Remarks'],
+      ...inRange(r.from, r.to).map(e => [ddmmyyyy(e.date), dayName(e.date), TYPES[e.type], e.dept, e.type === 'duty' ? e.from : '', e.type === 'duty' ? e.to : '', e.type === 'duty' ? fmtHM(durMin(e)) : '', entryLabel(e), e.place, e.remarks])];
+    const t = stats(inRange(r.from, r.to)); rows.push([], ['Duty days', t.dutyDays], ['Total duty hours', fmtHM(t.mins)], ['Extra hours', fmtHM(t.ot)], ['Leave days', t.leave]);
+  }
+  rows.push([], [CREDIT]);
+  download(r.file + '.csv', '﻿' + [...head, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+  toast('CSV saved. It opens in Excel or Google Sheets.');
+}
+function shareReport() {
+  const r = currentReport(), st = stats(inRange(r.from, r.to));
+  const nat = Object.entries(st.natures).sort((a, b) => b[1].mins - a[1].mins).slice(0, 5).map(([k, v]) => `• ${k}: ${v.count} (${fmtHrs(v.mins)})`).join('\n');
+  const text = `${r.title} – ${r.period}\n${S.profile.name ? S.profile.name + (S.profile.designation ? ', ' + S.profile.designation : '') + '\n' : ''}Department: ${S.defaults.dept}\n\nDuty days: ${st.dutyDays}\nDuty hours: ${fmtHrs(st.mins)}\nExtra hours: ${fmtHrs(st.ot)}\nNight duties: ${st.night}\nLeave days: ${st.leave}\nHolidays: ${st.holiday}\n${nat ? '\nNature of duty:\n' + nat + '\n' : ''}\n— Daily Duty Register (${CREDIT})`;
+  if (navigator.share) navigator.share({title:r.title, text}).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('Summary copied'), () => toast('Could not copy'));
+}
+
+/* ---------- settings ---------- */
+function listEditor(id, items, opts = {}) {
+  return `<div id="${id}">${items.map((it, i) => `<div class="li"><span class="grow">${opts.render ? opts.render(it) : esc(it)}</span>${opts.star ? `<button class="star ${opts.star(it) ? 'on' : ''}" data-star="${id}:${i}" aria-label="Make default">★</button>` : ''}<button class="x" data-del="${id}:${i}" aria-label="Remove">×</button></div>`).join('')}</div>`;
+}
+let deferredInstall = null;
+function renderSettings() {
+  const p = S.profile, d = S.defaults;
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  app.innerHTML = header('Settings') + `<main class="wrap">
+    <section class="card"><h2>Your details</h2><p class="muted small" style="margin:-4px 0 12px">Printed at the top of every statement.</p>
+      <label class="f"><span>Name</span><input class="in" data-p="name" value="${esc(p.name)}" placeholder="Your full name" autocomplete="name"></label>
+      <div class="two"><label class="f"><span>Designation</span><input class="in" data-p="designation" value="${esc(p.designation)}" placeholder="e.g. MTS, Clerk, Assistant"></label>
+      <label class="f"><span>Employee ID</span><input class="in" data-p="empId" value="${esc(p.empId)}" placeholder="Optional"></label></div>
+      <label class="f"><span>Office / station</span><input class="in" data-p="office" value="${esc(p.office)}" placeholder="e.g. Haddo Wharf, Port Blair"></label>
+    </section>
+    <section class="card"><h2>Departments</h2><p class="muted small" style="margin:-4px 0 8px">★ marks your main department, used for new entries and statements.</p>
+      ${listEditor('departments', S.departments, {star:x => x === d.dept})}
+      <div class="row" style="margin-top:8px"><input class="in" id="newDept" placeholder="Add department"><button class="btn" data-addto="departments">Add</button></div>
+    </section>
+    <section class="card"><h2>Duty timings</h2><p class="muted small" style="margin:-4px 0 8px">Shown as quick buttons when you add a duty. ★ is your usual timing.</p>
+      ${listEditor('shifts', S.shifts, {render:s => `<b>${esc(s.name)}</b> <span class="muted">${fmt12(s.from)} – ${fmt12(s.to)} · ${fmtHrs(durMin({type:'duty', from:s.from, to:s.to}))}</span>`, star:s => s.from === d.from && s.to === d.to})}
+      <input class="in" id="newShiftName" placeholder="Name, e.g. Ship shift" style="margin-top:10px"><div class="two" style="margin-top:8px"><input class="in" type="time" id="newShiftFrom" value="08:00" aria-label="From"><input class="in" type="time" id="newShiftTo" value="16:00" aria-label="To"></div>
+      <button class="btn block" style="margin-top:8px" data-addto="shifts">Add timing</button>
+    </section>
+    <section class="card"><h2>Nature of duty</h2><p class="muted small" style="margin:-4px 0 8px">★ is your usual duty.</p>
+      ${listEditor('natures', S.natures, {star:x => x === d.nature})}
+      <div class="row" style="margin-top:8px"><input class="in" id="newNature" placeholder="Add nature of duty"><button class="btn" data-addto="natures">Add</button></div>
+    </section>
+    <section class="card"><h2>Working hours</h2>
+      <label class="f"><span>Normal duty hours per day</span><input class="in" type="number" min="1" max="24" step="0.5" id="stdHours" value="${S.stdHours}"></label>
+      <p class="muted small" style="margin:0">Hours beyond this on a day are counted as extra hours.</p>
+    </section>
+    <section class="card"><h2>Install as an app</h2>
+      ${standalone ? '<p class="muted" style="margin:0">✅ Installed. It works offline.</p>' :
+        ios ? '<p style="margin:0">In Safari, tap <b>Share</b> <span aria-hidden="true">⬆︎</span> then <b>Add to Home Screen</b>. It will open like an app and work offline.</p>' :
+        `<p class="muted" style="margin:0 0 10px">Add it to your home screen. It works offline.</p><button class="btn" data-act="install" ${deferredInstall ? '' : 'disabled style="opacity:.5"'}>Install app</button>${deferredInstall ? '' : '<p class="muted small" style="margin:8px 0 0">If the button is greyed out, use your browser menu → <b>Install app</b> or <b>Add to Home screen</b>.</p>'}`}
+    </section>
+    <section class="card"><h2>Backup</h2><p class="muted small" style="margin:-4px 0 10px">Your register is stored only on this device (${S.entries.length} entries). Save a backup regularly, and restore it on a new phone.</p>
+      <div class="btns"><button class="btn" data-act="backup">⬇️ Save backup</button><button class="btn ghost" data-act="restore">⬆️ Restore backup</button><button class="btn ghost" data-act="csv-all">All entries (CSV)</button></div>
+      <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+      <button class="btn danger block" style="margin-top:12px" data-act="reset">Delete all data</button>
+    </section>
+    <section class="card center"><div class="logo" style="width:64px;height:64px;border-radius:16px;margin:0 auto 10px;background:url(icons/icon-192.png) center/cover"></div>
+      <h2 style="margin:0">Daily Duty Register</h2><p class="muted small" style="margin:4px 0 0">Version 1.0 · Works offline · No login</p>
+      <p style="margin:10px 0 0"><b>${esc(CREDIT)}</b></p>
+      <p class="small" style="margin:6px 0 0"><a href="https://github.com/maheshsurada9434/Daily-my-duty-register" target="_blank" rel="noopener">Source code on GitHub</a></p>
+    </section>
+  </main>`;
+}
+
+/* ---------- entry editor ---------- */
+function openEditor(entry, dateForNew) {
+  const isNew = !entry;
+  const d = S.defaults;
+  const e = entry ? {...entry} : {id:uid(), date:dateForNew || todayISO(), type:'duty', dept:d.dept, from:d.from, to:d.to, nature:d.nature, place:'', remarks:'', leaveType:LEAVE_TYPES[0]};
+  const sheet = $('#sheet');
+  const deptOpts = [...new Set([...S.departments, e.dept].filter(Boolean))];
+  const natOpts = [...new Set([...S.natures, e.type === 'duty' ? e.nature : ''].filter(Boolean))];
+  sheet.innerHTML = `<div class="sheet-bg" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="${isNew ? 'Add duty' : 'Edit entry'}">
+    <div class="grab"></div>
+    <div class="sh"><h2>${isNew ? 'Add duty' : 'Edit entry'}</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <form id="ef" autocomplete="off">
+      <label class="f"><span>Date</span><input class="in" type="date" name="date" value="${e.date}" required></label>
+      <div class="seg" id="typeSeg">${Object.entries(TYPES).map(([k, v]) => `<button type="button" data-type="${k}" class="${e.type === k ? 'on' : ''}">${v}</button>`).join('')}</div>
+      <label class="f"><span>Department</span><select class="in" name="dept">${deptOpts.map(x => `<option ${x === e.dept ? 'selected' : ''}>${esc(x)}</option>`).join('')}<option value="__new">+ Other department…</option></select></label>
+      <label class="f" id="deptNewWrap" hidden><span>New department name</span><input class="in" name="deptNew" placeholder="Department name"></label>
+      <div data-for="duty">
+        <span class="muted small" style="font-weight:600;display:block;margin-bottom:6px">Duty timing</span>
+        <div class="chips">${S.shifts.map((s, i) => `<button type="button" class="chip ${s.from === e.from && s.to === e.to ? 'on' : ''}" data-shift="${i}">${esc(s.name)} <small>${fmt12(s.from)}–${fmt12(s.to)}</small></button>`).join('')}</div>
+        <div class="two"><label class="f"><span>From</span><input class="in" type="time" name="from" value="${e.from || ''}"></label><label class="f"><span>To</span><input class="in" type="time" name="to" value="${e.to || ''}"></label></div>
+        <div class="calc" id="calc"></div>
+        <label class="f"><span>Nature of duty</span><select class="in" name="nature">${natOpts.map(x => `<option ${x === e.nature ? 'selected' : ''}>${esc(x)}</option>`).join('')}<option value="__new">+ Other…</option></select></label>
+        <label class="f" id="natNewWrap" hidden><span>Describe the duty</span><input class="in" name="natNew" placeholder="e.g. Election duty"></label>
+        <label class="f"><span>Place / vessel / location <small>(optional)</small></span><input class="in" name="place" value="${esc(e.place)}" placeholder="e.g. MV Campbell Bay, Haddo"></label>
+      </div>
+      <label class="f" data-for="leave"><span>Leave type</span><select class="in" name="leaveType">${LEAVE_TYPES.map(x => `<option ${x === e.leaveType ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>
+      <label class="f" data-for="holiday"><span>Holiday name <small>(optional)</small></span><input class="in" name="holName" value="${e.type === 'holiday' ? esc(e.nature) : ''}" placeholder="e.g. Diwali"></label>
+      <label class="f"><span>Remarks <small>(optional)</small></span><textarea class="in" name="remarks" placeholder="Any note for this day">${esc(e.remarks)}</textarea></label>
+      ${isNew ? `<details style="margin-bottom:12px"><summary class="small" style="font-weight:600;color:var(--brand);cursor:pointer">Add the same entry for more days</summary>
+        <div style="margin-top:10px"><label class="f"><span>Repeat every day until</span><input class="in" type="date" name="until"></label>
+        <label class="check"><input type="checkbox" name="skipSun" checked> Skip Sundays</label><label class="check"><input type="checkbox" name="skipFilled" checked> Skip days that already have an entry</label></div></details>` : ''}
+      <div class="btns"><button class="btn" type="submit">${isNew ? 'Save duty' : 'Save changes'}</button>${isNew ? '' : '<button class="btn ghost" type="button" data-act="dup">Copy to another day</button><button class="btn danger" type="button" data-act="del">Delete</button>'}</div>
+    </form></div></div>`;
+  const f = $('#ef');
+  let type = e.type;
+  const sync = () => {
+    $$('[data-for]', f).forEach(el => el.hidden = el.dataset.for !== type);
+    $$('#typeSeg button').forEach(b => b.classList.toggle('on', b.dataset.type === type));
+    $('#deptNewWrap').hidden = f.dept.value !== '__new';
+    $('#natNewWrap').hidden = f.nature.value !== '__new';
+    const m = durMin({type:'duty', from:f.from.value, to:f.to.value});
+    $('#calc').textContent = f.from.value && f.to.value ? `Duty hours: ${fmtHrs(m)}${toMin(f.to.value) <= toMin(f.from.value) ? ' (ends next day)' : ''}` : 'Enter the start and end time';
+    $$('[data-shift]', f).forEach(b => { const s = S.shifts[b.dataset.shift]; b.classList.toggle('on', s.from === f.from.value && s.to === f.to.value); });
+  };
+  sync();
+  f.addEventListener('input', sync); f.addEventListener('change', sync);
+  f.addEventListener('click', ev => {
+    const t = ev.target.closest('button'); if (!t) return;
+    if (t.dataset.type) { type = t.dataset.type; sync(); }
+    if (t.dataset.shift != null) { const s = S.shifts[t.dataset.shift]; f.from.value = s.from; f.to.value = s.to; sync(); }
+    if (t.dataset.act === 'del') { if (confirm('Delete this entry?')) { S.entries = S.entries.filter(x => x.id !== e.id); save(); closeSheet(); render(); toast('Entry deleted'); } }
+    if (t.dataset.act === 'dup') { const nd = prompt('Copy to which date? (YYYY-MM-DD)', addDays(f.date.value, 1)); if (nd && /^\d{4}-\d{2}-\d{2}$/.test(nd)) { S.entries.push({...collect(), id:uid(), date:nd}); save(); closeSheet(); render(); toast('Copied to ' + fmtDate(nd)); } }
+  });
+  function collect() {
+    let dept = f.dept.value === '__new' ? f.deptNew.value.trim() : f.dept.value;
+    if (dept && !S.departments.includes(dept)) S.departments.push(dept);
+    const out = {id:e.id, date:f.date.value, type, dept, remarks:f.remarks.value.trim(), from:'', to:'', nature:'', place:'', leaveType:''};
+    if (type === 'duty') {
+      out.from = f.from.value; out.to = f.to.value; out.place = f.place.value.trim();
+      out.nature = f.nature.value === '__new' ? f.natNew.value.trim() : f.nature.value;
+      if (out.nature && !S.natures.includes(out.nature)) S.natures.push(out.nature);
+    } else if (type === 'leave') out.leaveType = f.leaveType.value;
+    else if (type === 'holiday') out.nature = f.holName.value.trim();
+    return out;
+  }
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    if (!f.date.value) return toast('Choose a date');
+    if (type === 'duty' && (!f.from.value || !f.to.value)) return toast('Enter the duty timing');
+    if (f.dept.value === '__new' && !f.deptNew.value.trim()) return toast('Enter the department name');
+    if (type === 'duty' && f.nature.value === '__new' && !f.natNew.value.trim()) return toast('Describe the nature of duty');
+    const out = collect();
+    if (isNew) {
+      S.entries.push(out);
+      let n = 1;
+      const until = f.until && f.until.value;
+      if (until && until > out.date) {
+        for (let d = addDays(out.date, 1); d <= until && n < 400; d = addDays(d, 1)) {
+          if (f.skipSun.checked && dObj(d).getDay() === 0) continue;
+          if (f.skipFilled.checked && onDate(d).length) continue;
+          S.entries.push({...out, id:uid(), date:d}); n++;
+        }
+      }
+      save(); closeSheet(); render(); toast(n > 1 ? `${n} entries saved` : 'Duty saved');
+    } else {
+      const i = S.entries.findIndex(x => x.id === e.id); S.entries[i] = out; save(); closeSheet(); render(); toast('Saved');
+    }
+  });
+  sheet.firstElementChild.addEventListener('click', ev => { if (ev.target.hasAttribute('data-close') || ev.target.closest('.sh [data-close]')) closeSheet(); });
+}
+function closeSheet() { $('#sheet').innerHTML = ''; }
+
+/* ---------- onboarding ---------- */
+let ob = {name:'', designation:'', dept:'', from:'09:00', to:'17:00', nature:'General duty', natNew:''};
+function renderOnboarding(step) {
+  if (step === 1) {
+    app.innerHTML = `<div class="ob"><div class="wrap">
+      <div class="big" aria-hidden="true"></div>
+      <h1>Daily Duty Register</h1>
+      <p class="lead">Write your duty in a few taps every day. Get your monthly and yearly duty statement ready to print.</p>
+      <ul class="feat">
+        <li><span>📝</span><span><b>Daily duty entry</b>Department, timing and nature of duty, with hours counted for you</span></li>
+        <li><span>📅</span><span><b>Monthly &amp; yearly statements</b>Print, save as PDF or open in Excel</span></li>
+        <li><span>🏖️</span><span><b>Leave, holidays and weekly off</b>All counted in your statement</span></li>
+        <li><span>🔒</span><span><b>Private and offline</b>Stays on your phone. No login</span></li>
+      </ul>
+      <button class="btn block" data-ob="2">Get started</button>
+      <p class="by">${esc(CREDIT)}</p>
+    </div></div>`;
+    return;
+  }
+  const natOpts = DEFAULT_NATURES;
+  app.innerHTML = `<div class="ob"><div class="wrap">
+    <div class="step">Set up your register</div>
+    <form class="card" id="obf" autocomplete="on">
+      <label class="f"><span>Department name *</span><input class="in" name="dept" required value="${esc(ob.dept)}" placeholder="e.g. Directorate of Shipping Services" autocomplete="organization"></label>
+      <label class="f"><span>Your name</span><input class="in" name="name" value="${esc(ob.name)}" placeholder="Printed on your statements" autocomplete="name"></label>
+      <label class="f"><span>Designation</span><input class="in" name="designation" value="${esc(ob.designation)}" placeholder="e.g. MTS, LDC, Deck hand" autocomplete="organization-title"></label>
+      <span class="muted small" style="font-weight:600;display:block;margin-bottom:6px">Your usual duty timing *</span>
+      <div class="chips">${DEFAULT_SHIFTS.map((s, i) => `<button type="button" class="chip" data-obshift="${i}">${esc(s.name)} <small>${fmt12(s.from)}–${fmt12(s.to)}</small></button>`).join('')}</div>
+      <div class="two"><label class="f"><span>From</span><input class="in" type="time" name="from" value="${ob.from}" required></label><label class="f"><span>To</span><input class="in" type="time" name="to" value="${ob.to}" required></label></div>
+      <label class="f"><span>Usual nature of duty *</span><select class="in" name="nature">${natOpts.map(x => `<option ${x === ob.nature ? 'selected' : ''}>${esc(x)}</option>`).join('')}<option value="__new">+ Other…</option></select></label>
+      <label class="f" id="obNat" hidden><span>Describe your duty</span><input class="in" name="natNew" placeholder="e.g. Ticket checking duty"></label>
+      <p class="muted small" style="margin:0 0 12px">You can change all of this later and add more departments, timings and duties in Settings.</p>
+      <button class="btn block" type="submit">Start my register</button>
+    </form>
+    <p class="by">${esc(CREDIT)}</p>
+  </div></div>`;
+  const f = $('#obf');
+  const sync = () => { $('#obNat').hidden = f.nature.value !== '__new'; $$('[data-obshift]').forEach(b => { const s = DEFAULT_SHIFTS[b.dataset.obshift]; b.classList.toggle('on', s.from === f.from.value && s.to === f.to.value); }); };
+  sync(); f.addEventListener('input', sync); f.addEventListener('change', sync);
+  f.addEventListener('click', ev => { const b = ev.target.closest('[data-obshift]'); if (b) { const s = DEFAULT_SHIFTS[b.dataset.obshift]; f.from.value = s.from; f.to.value = s.to; sync(); } });
+  f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const dept = f.dept.value.trim();
+    const nature = f.nature.value === '__new' ? f.natNew.value.trim() : f.nature.value;
+    if (!dept) return toast('Enter your department name');
+    if (!nature) return toast('Enter the nature of duty');
+    S = fresh();
+    S.profile.name = f.name.value.trim(); S.profile.designation = f.designation.value.trim();
+    S.departments = [dept];
+    S.defaults = {dept, from:f.from.value, to:f.to.value, nature};
+    S.natures = [nature, ...S.natures.filter(n => n !== nature)];
+    if (!S.shifts.some(s => s.from === f.from.value && s.to === f.to.value)) S.shifts.unshift({name:'My duty', from:f.from.value, to:f.to.value});
+    save(); UI.tab = 'home'; render(); toast('Your register is ready');
+  });
+}
+
+/* ---------- global events ---------- */
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('button, a[data-goto]'); if (!t) return;
+  const ds = t.dataset;
+  if (ds.ob) return renderOnboarding(Number(ds.ob));
+  if (ds.tab) { UI.tab = ds.tab; render(); scrollTo(0, 0); return; }
+  if (ds.goto) { ev.preventDefault(); UI.tab = ds.goto; render(); scrollTo(0, 0); return; }
+  if (ds.edit) { const e = S.entries.find(x => x.id === ds.edit); if (e) openEditor(e); return; }
+  if (ds.addDate) return openEditor(null, ds.addDate);
+  if (ds.day) { const es = onDate(ds.day); return es.length === 1 ? openEditor(es[0]) : es.length ? (UI.tab = 'register', UI.regY = parts(ds.day)[0], UI.regM = parts(ds.day)[1], render()) : openEditor(null, ds.day); }
+  if (ds.reg) { let m = UI.regM + Number(ds.reg), y = UI.regY; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } UI.regM = m; UI.regY = y; return render(); }
+  if (ds.rm) { let m = UI.repM + Number(ds.rm), y = UI.repY; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } UI.repM = m; UI.repY = y; return render(); }
+  if (ds.ry) { UI.yr += Number(ds.ry); return render(); }
+  if (ds.rep) { UI.rep = ds.rep; return render(); }
+  if (ds.quick) {
+    const n = new Date(), t0 = todayISO();
+    if (ds.quick === 'week') { UI.from = addDays(t0, -((n.getDay() + 6) % 7)); UI.to = t0; }
+    if (ds.quick === 'lastmonth') { let y = n.getFullYear(), m = n.getMonth(); if (m === 0) { m = 12; y--; } UI.from = monthStart(y, m); UI.to = monthEnd(y, m); }
+    if (ds.quick === 'q') { UI.from = addDays(t0, -90); UI.to = t0; }
+    if (ds.quick === 'fy') { const y = n.getMonth() >= 3 ? n.getFullYear() : n.getFullYear() - 1; UI.from = `${y}-04-01`; UI.to = `${y+1}-03-31`; }
+    return render();
+  }
+  if (ds.star) {
+    const [list, i] = ds.star.split(':'), it = S[list][i];
+    if (list === 'departments') S.defaults.dept = it;
+    if (list === 'natures') S.defaults.nature = it;
+    if (list === 'shifts') { S.defaults.from = it.from; S.defaults.to = it.to; }
+    save(); toast('Set as default'); return render();
+  }
+  if (ds.del) {
+    const [list, i] = ds.del.split(':'), it = S[list][i];
+    if (list === 'departments' && S.departments.length === 1) return toast('Keep at least one department');
+    if (list === 'shifts' && S.shifts.length === 1) return toast('Keep at least one timing');
+    if (list === 'natures' && S.natures.length === 1) return toast('Keep at least one nature of duty');
+    S[list].splice(i, 1);
+    if (list === 'departments' && S.defaults.dept === it) S.defaults.dept = S.departments[0];
+    if (list === 'natures' && S.defaults.nature === it) S.defaults.nature = S.natures[0];
+    save(); return render();
+  }
+  if (ds.addto) {
+    if (ds.addto === 'departments') { const v = $('#newDept').value.trim(); if (!v) return; if (!S.departments.includes(v)) S.departments.push(v); }
+    if (ds.addto === 'natures') { const v = $('#newNature').value.trim(); if (!v) return; if (!S.natures.includes(v)) S.natures.push(v); }
+    if (ds.addto === 'shifts') { const name = $('#newShiftName').value.trim() || 'Shift', from = $('#newShiftFrom').value, to = $('#newShiftTo').value; if (!from || !to) return toast('Enter both times'); S.shifts.push({name, from, to}); }
+    save(); toast('Added'); return render();
+  }
+  switch (ds.act) {
+    case 'add': return openEditor(null);
+    case 'repeat': {
+      const last = S.entries.filter(e => e.type === 'duty').sort(sortE).pop();
+      if (!last) return;
+      S.entries.push({...last, id:uid(), date:todayISO(), remarks:''}); save(); render(); toast('Added for today. Tap it to change.'); return;
+    }
+    case 'fill-off': {
+      const start = monthStart(UI.regY, UI.regM), end = monthEnd(UI.regY, UI.regM); let n = 0;
+      for (let d = start; d <= end; d = addDays(d, 1)) if (dObj(d).getDay() === 0 && !onDate(d).length) { S.entries.push({id:uid(), date:d, type:'off', dept:S.defaults.dept, from:'', to:'', nature:'', place:'', remarks:'', leaveType:''}); n++; }
+      save(); render(); toast(n ? `${n} Sunday${n > 1 ? 's' : ''} marked as weekly off` : 'All Sundays already have an entry'); return;
+    }
+    case 'print': return printReport();
+    case 'csv': return csvReport();
+    case 'share': return shareReport();
+    case 'install': if (deferredInstall) { deferredInstall.prompt(); deferredInstall.userChoice.finally(() => { deferredInstall = null; render(); }); } return;
+    case 'backup': download(`duty-register-backup-${todayISO()}.json`, JSON.stringify(S, null, 1), 'application/json'); return toast('Backup saved');
+    case 'restore': return $('#restoreFile').click();
+    case 'csv-all': {
+      const rows = [['Date','Day','Type','Department','Duty from','Duty to','Hours','Nature of duty','Place','Remarks'], ...S.entries.slice().sort(sortE).map(e => [ddmmyyyy(e.date), dayName(e.date), TYPES[e.type], e.dept, e.from, e.to, e.type === 'duty' ? fmtHM(durMin(e)) : '', entryLabel(e), e.place, e.remarks]), [], [CREDIT]];
+      return download(`duty-register-all-${todayISO()}.csv`, '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+    }
+    case 'reset':
+      if (confirm('Delete all your duty entries and settings from this device? Save a backup first if you need it.') && confirm('Are you sure? This cannot be undone.')) { localStorage.removeItem(KEY); S = null; ob = {...ob, dept:''}; render(); }
+      return;
+  }
+});
+document.addEventListener('change', ev => {
+  const t = ev.target;
+  if (t.id === 'showEmpty') { UI.showEmpty = t.checked; render(); }
+  if (t.dataset && t.dataset.p) { S.profile[t.dataset.p] = t.value.trim(); save(); toast('Saved'); }
+  if (t.id === 'stdHours') { const v = Number(t.value); if (v > 0 && v <= 24) { S.stdHours = v; save(); toast('Saved'); } }
+  if (t.id === 'rFrom' || t.id === 'rTo') { UI.from = $('#rFrom').value; UI.to = $('#rTo').value; render(); }
+  if (t.id === 'restoreFile' && t.files[0]) {
+    const fr = new FileReader();
+    fr.onload = () => {
+      try {
+        const data = JSON.parse(fr.result);
+        if (!data || !Array.isArray(data.entries) || !Array.isArray(data.departments)) throw new Error('bad');
+        if (!confirm(`Restore this backup with ${data.entries.length} entries? It replaces the data on this device.`)) return;
+        S = Object.assign(fresh(), data); save(); render(); toast('Backup restored');
+      } catch (e) { toast('That file is not a Duty Register backup'); }
+    };
+    fr.readAsText(t.files[0]); t.value = '';
+  }
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && $('#sheet').innerHTML) closeSheet(); });
+window.addEventListener('afterprint', () => { $('#print').innerHTML = ''; });
+window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); deferredInstall = ev; if (UI.tab === 'settings' && S) render(); });
+
+render();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
